@@ -14,7 +14,6 @@ import Navbar from './components/Navbar';
 import Users from './pages/admin/Users';
 import Equipment from './pages/admin/Equipment';
 import Penalties from './pages/admin/Penalties';
-import Reports from './pages/admin/Reports';
 import UserNavbar from './components/UserNavbar';
 import UserDashboardHome from './pages/user/UserDashboardHome';
 import UserBorrowed from './pages/user/UserBorrowed';
@@ -28,6 +27,8 @@ import StaffEquipment from './pages/staff/StaffEquipment';
 import StaffUsers from './pages/staff/StaffUsers';
 import ReportsAnalytics from './pages/admin/ReportsAnalytics';
 import { FaDumbbell } from 'react-icons/fa';
+import StaffAssignEquipment from './pages/staff/StaffAssignEquipment';
+import Reports from './pages/admin/Reports';
 
 // Placeholder pages
 const Home = () => (
@@ -132,6 +133,7 @@ function App() {
                 <Route path="borrowed" element={<StaffBorrowed />} />
                 <Route path="equipment" element={<StaffEquipment />} />
                 <Route path="users" element={<StaffUsers />} />
+                <Route path="assign" element={<StaffAssignEquipment />} />
               </Routes>
             </div>
           </StaffRoute>

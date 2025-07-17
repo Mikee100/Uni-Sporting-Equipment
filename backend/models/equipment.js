@@ -1,8 +1,14 @@
 const db = require('../utils/db');
 
 const Equipment = {
-  async getAll() {
-    const [rows] = await db.query('SELECT * FROM equipment');
+  async getAll(sport) {
+    let query = 'SELECT * FROM equipment';
+    let params = [];
+    if (sport) {
+      query += ' WHERE sport = ?';
+      params.push(sport);
+    }
+    const [rows] = await db.query(query, params);
     return rows;
   },
 
@@ -11,18 +17,18 @@ const Equipment = {
     return rows[0];
   },
 
-  async create({ name, description, quantity, status = 'available' }) {
+  async create({ name, description, quantity, status = 'available', sport = 'General' }) {
     const [result] = await db.query(
-      'INSERT INTO equipment (name, description, quantity, status) VALUES (?, ?, ?, ?)',
-      [name, description, quantity, status]
+      'INSERT INTO equipment (name, description, quantity, status, sport) VALUES (?, ?, ?, ?, ?)',
+      [name, description, quantity, status, sport]
     );
-    return { id: result.insertId, name, description, quantity, status };
+    return { id: result.insertId, name, description, quantity, status, sport };
   },
 
-  async update(id, { name, description, quantity, status }) {
+  async update(id, { name, description, quantity, status, sport }) {
     await db.query(
-      'UPDATE equipment SET name = ?, description = ?, quantity = ?, status = ? WHERE id = ?',
-      [name, description, quantity, status, id]
+      'UPDATE equipment SET name = ?, description = ?, quantity = ?, status = ?, sport = ? WHERE id = ?',
+      [name, description, quantity, status, sport, id]
     );
     return this.getById(id);
   },

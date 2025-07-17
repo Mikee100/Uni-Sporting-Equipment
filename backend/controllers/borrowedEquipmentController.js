@@ -126,6 +126,7 @@ const cancelBorrowRequest = async (req, res) => {
 };
 
 const getPendingRequests = async (req, res) => {
+  console.log('Controller: getPendingRequests called by user:', req.user ? req.user.id : 'unknown');
   try {
     const records = await BorrowedEquipment.getPending();
     res.json(records);

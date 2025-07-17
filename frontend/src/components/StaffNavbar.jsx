@@ -39,6 +39,7 @@ const StaffNavbar = () => {
             {item.label}
           </NavLink>
         ))}
+        <a href="/staff/assign" className="block px-4 py-2 hover:bg-blue-100 rounded transition">Assign Equipment</a>
       </nav>
       <button
         onClick={handleLogout}

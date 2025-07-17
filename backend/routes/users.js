@@ -16,7 +16,7 @@ router.get('/', authenticate, (req, res, next) => {
     return authorizeRoles('admin', 'staff')(req, res, next);
   }
   // Only admin can access all users
-  return authorizeRoles('admin')(req, res, next);
+  return authorizeRoles('admin', 'staff' )(req, res, next);
 }, async (req, res) => {
   if (req.query.role === 'user') {
     // Filter users by role 'user'

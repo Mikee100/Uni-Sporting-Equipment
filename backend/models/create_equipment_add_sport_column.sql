@@ -1,0 +1,2 @@
+ALTER TABLE equipment
+ADD COLUMN sport VARCHAR(50) NOT NULL DEFAULT 'General'; 

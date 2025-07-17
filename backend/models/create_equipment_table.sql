@@ -4,5 +4,6 @@ CREATE TABLE equipment (
     description TEXT,
     quantity INT NOT NULL DEFAULT 1,
     status ENUM('available', 'borrowed', 'lost', 'damaged') DEFAULT 'available',
+    sport VARCHAR(50) NOT NULL DEFAULT 'General',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ); 

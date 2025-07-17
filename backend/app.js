@@ -8,12 +8,18 @@ const borrowedEquipmentRoutes = require('./routes/borrowedEquipment');
 const penaltiesRoutes = require('./routes/penalties');
 const usersRoutes = require('./routes/users');
 const reportsRoutes = require('./routes/reports');
+const morgan = require('morgan');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
+app.use(morgan('dev'));
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
+  next();
+});
 app.use('/api/auth', authRoutes);
 app.use('/api/equipment', equipmentRoutes);
 app.use('/api/borrowed', borrowedEquipmentRoutes);

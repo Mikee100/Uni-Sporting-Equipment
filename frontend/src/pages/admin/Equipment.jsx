@@ -4,7 +4,10 @@ import { FaPlus, FaEdit, FaTrash, FaTimes, FaDumbbell, FaSearch, FaFileExport, F
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
-const emptyForm = { name: '', description: '', quantity: 1, status: 'available' };
+const emptyForm = { name: '', description: '', quantity: 1, status: 'available', sport: 'General' };
+const COMMON_SPORTS = [
+  'Football', 'Basketball', 'Tennis', 'Volleyball', 'Badminton', 'Table Tennis', 'Cricket', 'Rugby', 'Hockey', 'Athletics', 'Swimming', 'Other', 'General'
+];
 
 const statusColors = {
   available: 'bg-green-100 text-green-700',
@@ -21,6 +24,7 @@ const Equipment = () => {
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [sportFilter, setSportFilter] = useState('All Sports');
 
   const fetchEquipment = async () => {
     setLoading(true);
@@ -52,7 +56,7 @@ const Equipment = () => {
 
   const handleEdit = item => {
     setEditingId(item.id);
-    setForm({ name: item.name, description: item.description, quantity: item.quantity, status: item.status });
+    setForm({ name: item.name, description: item.description, quantity: item.quantity, status: item.status, sport: item.sport || 'General' });
   };
 
   const handleUpdate = async e => {
@@ -85,7 +89,8 @@ const Equipment = () => {
   const filteredEquipment = equipment.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase()) || item.description.toLowerCase().includes(search.toLowerCase());
     const matchesStatus = statusFilter ? item.status === statusFilter : true;
-    return matchesSearch && matchesStatus;
+    const matchesSport = sportFilter === 'All Sports' ? true : (item.sport === sportFilter);
+    return matchesSearch && matchesStatus && matchesSport;
   });
 
   // Export to CSV
@@ -149,6 +154,19 @@ const Equipment = () => {
               <option value="lost">Lost</option>
               <option value="damaged">Damaged</option>
             </select>
+            {/* Sport Filter Dropdown */}
+            <label htmlFor="sport-filter" className="font-semibold text-gray-700">Sport:</label>
+            <select
+              id="sport-filter"
+              value={sportFilter}
+              onChange={e => setSportFilter(e.target.value)}
+              className="border px-3 py-2 rounded w-40 focus:outline-none focus:ring-2 focus:ring-green-200"
+            >
+              <option value="All Sports">All Sports</option>
+              {COMMON_SPORTS.filter(s => s !== 'All Sports').map(sport => (
+                <option key={sport} value={sport}>{sport}</option>
+              ))}
+            </select>
           </div>
           <div className="flex gap-2">
             <button onClick={handleExportCSV} className="flex items-center gap-2 bg-green-600 hover:bg-green-700 transition text-white px-4 py-2 rounded shadow">
@@ -171,6 +189,19 @@ const Equipment = () => {
               <option value="lost">Lost</option>
               <option value="damaged">Damaged</option>
             </select>
+            {/* Sport Dropdown with free text */}
+            <input
+              name="sport"
+              value={form.sport}
+              onChange={handleChange}
+              list="sport-list"
+              placeholder="Sport"
+              className="border px-3 py-2 rounded w-40 focus:outline-none focus:ring-2 focus:ring-green-200"
+              required
+            />
+            <datalist id="sport-list">
+              {COMMON_SPORTS.map(sport => <option key={sport} value={sport} />)}
+            </datalist>
             <button type="submit" className="flex items-center gap-2 bg-green-600 hover:bg-green-700 transition text-white px-4 py-2 rounded shadow" disabled={loading}>
               {editingId ? <FaEdit /> : <FaPlus />} {editingId ? 'Update' : 'Add'}
             </button>
@@ -187,6 +218,7 @@ const Equipment = () => {
             <thead>
               <tr className="bg-gray-100">
                 <th className="py-3 px-4 text-left font-semibold">Name</th>
+                <th className="py-3 px-4 text-left font-semibold">Sport</th>
                 <th className="py-3 px-4 text-left font-semibold">Description</th>
                 <th className="py-3 px-4 text-left font-semibold">Quantity</th>
                 <th className="py-3 px-4 text-left font-semibold">Status</th>
@@ -199,6 +231,7 @@ const Equipment = () => {
                   `text-center ${idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-green-50 transition`
                 }>
                   <td className="py-2 px-4 text-left">{item.name}</td>
+                  <td className="py-2 px-4 text-left">{item.sport || 'General'}</td>
                   <td className="py-2 px-4 text-left">{item.description}</td>
                   <td className="py-2 px-4 text-left">
                     {item.quantity}
@@ -222,7 +255,7 @@ const Equipment = () => {
                 </tr>
               ))}
               {filteredEquipment.length === 0 && (
-                <tr><td colSpan={5} className="py-4 text-gray-500 text-center">No equipment found.</td></tr>
+                <tr><td colSpan={6} className="py-4 text-gray-500 text-center">No equipment found.</td></tr>
               )}
             </tbody>
           </table>

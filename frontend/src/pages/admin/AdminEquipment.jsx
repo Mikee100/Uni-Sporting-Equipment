@@ -1,10 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { getAllEquipment, createEquipment, updateEquipment, deleteEquipment } from '../../api/equipment';
 import { FaPlus, FaEdit, FaTrash, FaTimes, FaDumbbell, FaSearch, FaFileExport, FaExclamationTriangle, FaFilePdf } from 'react-icons/fa';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
-const emptyForm = { name: '', description: '', quantity: 1, status: 'available' };
+const emptyForm = { name: '', description: '', quantity: 1, status: 'available', sport: '' };
+const COMMON_SPORTS = [
+  'Football', 'Basketball', 'Tennis', 'Volleyball', 'Badminton', 'Table Tennis', 'Cricket', 'Rugby', 'Hockey', 'Athletics', 'Swimming', 'Other', 'General'
+];
 
 const statusColors = {
   available: 'bg-green-100 text-green-700',
@@ -21,6 +24,8 @@ const AdminEquipment = () => {
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [stockFilter, setStockFilter] = useState('');
+  const formRef = useRef(null);
 
   const fetchEquipment = async () => {
     setLoading(true);
@@ -52,7 +57,10 @@ const AdminEquipment = () => {
 
   const handleEdit = item => {
     setEditingId(item.id);
-    setForm({ name: item.name, description: item.description, quantity: item.quantity, status: item.status });
+    setForm({ name: item.name, description: item.description, quantity: item.quantity, status: item.status, sport: item.sport || '' });
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
   };
 
   const handleUpdate = async e => {
@@ -85,7 +93,11 @@ const AdminEquipment = () => {
   const filteredEquipment = equipment.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase()) || item.description.toLowerCase().includes(search.toLowerCase());
     const matchesStatus = statusFilter ? item.status === statusFilter : true;
-    return matchesSearch && matchesStatus;
+    let matchesStock = true;
+    if (stockFilter === 'in') matchesStock = item.quantity > 0;
+    if (stockFilter === 'low') matchesStock = item.quantity > 0 && item.quantity <= 5;
+    if (stockFilter === 'out') matchesStock = item.quantity === 0;
+    return matchesSearch && matchesStatus && matchesStock;
   });
 
   // Export to CSV
@@ -122,7 +134,7 @@ const AdminEquipment = () => {
     <div className="ml-56 min-h-screen bg-gray-50 py-10 px-4">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-2xl font-extrabold mb-6 flex items-center gap-2">
-          <FaDumbbell className="text-green-600" /> Manage Equipment
+          <FaDumbbell className="text-green-600" /> Equipment Management
         </h1>
         {error && <div className="text-red-500 mb-4">{error}</div>}
         {/* Search, Filter, Export */}
@@ -149,6 +161,16 @@ const AdminEquipment = () => {
               <option value="lost">Lost</option>
               <option value="damaged">Damaged</option>
             </select>
+            <select
+              value={stockFilter}
+              onChange={e => setStockFilter(e.target.value)}
+              className="border px-3 py-2 rounded w-40 focus:outline-none focus:ring-2 focus:ring-green-200"
+            >
+              <option value="">All Stock</option>
+              <option value="in">In Stock</option>
+              <option value="low">Low Stock (≤5)</option>
+              <option value="out">Out of Stock</option>
+            </select>
           </div>
           <div className="flex gap-2">
             <button onClick={handleExportCSV} className="flex items-center gap-2 bg-green-600 hover:bg-green-700 transition text-white px-4 py-2 rounded shadow">
@@ -159,34 +181,14 @@ const AdminEquipment = () => {
             </button>
           </div>
         </div>
-        {/* Form */}
-        <div className="bg-white rounded-xl shadow p-6 mb-8">
-          <form onSubmit={editingId ? handleUpdate : handleAdd} className="flex flex-wrap gap-3 items-end">
-            <input name="name" value={form.name} onChange={handleChange} placeholder="Name" className="border px-3 py-2 rounded w-40 focus:outline-none focus:ring-2 focus:ring-green-200" required />
-            <input name="description" value={form.description} onChange={handleChange} placeholder="Description" className="border px-3 py-2 rounded w-52 focus:outline-none focus:ring-2 focus:ring-green-200" />
-            <input name="quantity" value={form.quantity} onChange={handleChange} placeholder="Quantity" className="border px-3 py-2 rounded w-32 focus:outline-none focus:ring-2 focus:ring-green-200" type="number" min="1" required />
-            <select name="status" value={form.status} onChange={handleChange} className="border px-3 py-2 rounded w-36 focus:outline-none focus:ring-2 focus:ring-green-200">
-              <option value="available">Available</option>
-              <option value="borrowed">Borrowed</option>
-              <option value="lost">Lost</option>
-              <option value="damaged">Damaged</option>
-            </select>
-            <button type="submit" className="flex items-center gap-2 bg-green-600 hover:bg-green-700 transition text-white px-4 py-2 rounded shadow" disabled={loading}>
-              {editingId ? <FaEdit /> : <FaPlus />} {editingId ? 'Update' : 'Add'}
-            </button>
-            {editingId && (
-              <button type="button" onClick={() => { setEditingId(null); setForm(emptyForm); }} className="flex items-center gap-2 px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 transition text-gray-700 ml-2">
-                <FaTimes /> Cancel
-              </button>
-            )}
-          </form>
-        </div>
-        {/* Table */}
-        <div className="bg-white rounded-xl shadow overflow-x-auto">
+        {/* Equipment List Table */}
+        <div className="bg-white rounded-xl shadow overflow-x-auto mb-10">
+          <h2 className="text-xl font-bold px-6 pt-6 pb-2 text-green-700">Equipment List</h2>
           <table className="min-w-full">
             <thead>
               <tr className="bg-gray-100">
                 <th className="py-3 px-4 text-left font-semibold">Name</th>
+                <th className="py-3 px-4 text-left font-semibold">Sport</th>
                 <th className="py-3 px-4 text-left font-semibold">Description</th>
                 <th className="py-3 px-4 text-left font-semibold">Quantity</th>
                 <th className="py-3 px-4 text-left font-semibold">Status</th>
@@ -199,20 +201,14 @@ const AdminEquipment = () => {
                   `text-center ${idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-green-50 transition`
                 }>
                   <td className="py-2 px-4 text-left">{item.name}</td>
+                  <td className="py-2 px-4 text-left">{item.sport || 'General'}</td>
                   <td className="py-2 px-4 text-left">{item.description}</td>
-                  <td className="py-2 px-4 text-left">
-                    {item.quantity}
-                    {item.quantity <= 3 && (
-                      <span className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700 text-xs font-semibold">
-                        <FaExclamationTriangle className="inline text-yellow-500" /> Low
-                      </span>
-                    )}
-                  </td>
+                  <td className="py-2 px-4 text-left">{item.quantity}</td>
                   <td className="py-2 px-4 text-left">
                     <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${statusColors[item.status] || 'bg-gray-200 text-gray-700'}`}>{item.status.charAt(0).toUpperCase() + item.status.slice(1)}</span>
                   </td>
                   <td className="py-2 px-4 flex justify-center gap-2">
-                    <button onClick={() => handleEdit(item)} className="flex items-center gap-1 text-green-600 hover:text-green-800 transition px-2 py-1 rounded focus:outline-none focus:ring-2 focus:ring-green-200">
+                    <button onClick={() => handleEdit(item)} className="flex items-center gap-1 text-blue-600 hover:text-blue-800 transition px-2 py-1 rounded focus:outline-none focus:ring-2 focus:ring-blue-200">
                       <FaEdit /> Edit
                     </button>
                     <button onClick={() => handleDelete(item.id)} className="flex items-center gap-1 text-red-500 hover:text-red-700 transition px-2 py-1 rounded focus:outline-none focus:ring-2 focus:ring-red-200">
@@ -222,10 +218,59 @@ const AdminEquipment = () => {
                 </tr>
               ))}
               {filteredEquipment.length === 0 && (
-                <tr><td colSpan={5} className="py-4 text-gray-500 text-center">No equipment found.</td></tr>
+                <tr><td colSpan={6} className="py-4 text-gray-500 text-center">No equipment found.</td></tr>
               )}
             </tbody>
           </table>
+        </div>
+        {/* Add/Edit Equipment Section */}
+        <div ref={formRef} className="bg-white rounded-xl shadow p-8 mb-8 border-t-4 border-green-500">
+          <h2 className="text-xl font-bold mb-4 text-green-700 flex items-center gap-2"><FaPlus /> {editingId ? 'Edit Equipment' : 'Add New Equipment'}</h2>
+          <form onSubmit={editingId ? handleUpdate : handleAdd} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block font-semibold mb-1">Name <span className="text-red-500">*</span></label>
+              <input name="name" value={form.name} onChange={handleChange} placeholder="e.g. Football" className="border px-3 py-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-green-200" required />
+              <p className="text-xs text-gray-500 mt-1">Enter the equipment name.</p>
+            </div>
+            <div>
+              <label className="block font-semibold mb-1">Sport <span className="text-red-500">*</span></label>
+              <select name="sport" value={form.sport} onChange={handleChange} className="border px-3 py-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-green-200" required>
+                <option value="">Select Sport</option>
+                {COMMON_SPORTS.map(sport => <option key={sport} value={sport}>{sport}</option>)}
+              </select>
+              <p className="text-xs text-gray-500 mt-1">Choose the sport category for this equipment.</p>
+            </div>
+            <div>
+              <label className="block font-semibold mb-1">Description</label>
+              <input name="description" value={form.description} onChange={handleChange} placeholder="e.g. Size 5, Adidas" className="border px-3 py-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-green-200" />
+              <p className="text-xs text-gray-500 mt-1">Add a short description (optional).</p>
+            </div>
+            <div>
+              <label className="block font-semibold mb-1">Quantity <span className="text-red-500">*</span></label>
+              <input name="quantity" value={form.quantity} onChange={handleChange} placeholder="e.g. 10" className="border px-3 py-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-green-200" type="number" min="1" required />
+              <p className="text-xs text-gray-500 mt-1">Enter the available quantity.</p>
+            </div>
+            <div>
+              <label className="block font-semibold mb-1">Status <span className="text-red-500">*</span></label>
+              <select name="status" value={form.status} onChange={handleChange} className="border px-3 py-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-green-200" required>
+                <option value="available">Available</option>
+                <option value="borrowed">Borrowed</option>
+                <option value="lost">Lost</option>
+                <option value="damaged">Damaged</option>
+              </select>
+              <p className="text-xs text-gray-500 mt-1">Set the current status of the equipment.</p>
+            </div>
+            <div className="flex items-end gap-2 mt-6">
+              <button type="submit" className="flex items-center gap-2 bg-green-600 hover:bg-green-700 transition text-white px-4 py-2 rounded shadow" disabled={loading}>
+                {editingId ? <FaEdit /> : <FaPlus />} {editingId ? 'Update' : 'Add'}
+              </button>
+              {editingId && (
+                <button type="button" onClick={() => { setEditingId(null); setForm(emptyForm); }} className="flex items-center gap-2 px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 transition text-gray-700 ml-2">
+                  <FaTimes /> Cancel
+                </button>
+              )}
+            </div>
+          </form>
         </div>
       </div>
     </div>

@@ -23,6 +23,9 @@ router.get('/my', authenticate, authorizeRoles('user', 'admin', 'staff'), (req, 
 // Users can view their own borrow records
 router.get('/user/:userId', authenticate, authorizeRoles('admin', 'staff', 'user'), getBorrowedByUser);
 
+// Staff/Admin: List all pending borrow requests
+router.get('/pending', authenticate, authorizeRoles('admin', 'staff'), getPendingRequests);
+
 // Staff can view any record by ID
 router.get('/:id', authenticate, authorizeRoles('admin', 'staff'), getBorrowedById);
 
@@ -38,8 +41,6 @@ router.post('/request', authenticate, authorizeRoles('user'), requestBorrow);
 // Students can cancel their own pending borrow requests
 router.delete('/:id', authenticate, authorizeRoles('user'), cancelBorrowRequest);
 
-// Staff/Admin: List all pending borrow requests
-router.get('/pending', authenticate, authorizeRoles('admin', 'staff'), getPendingRequests);
 // Staff/Admin: Approve a pending request
 router.put('/approve/:id', authenticate, authorizeRoles('admin', 'staff'), approveRequest);
 // Staff/Admin: Reject a pending request
